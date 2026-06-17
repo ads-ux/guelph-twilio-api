@@ -52,9 +52,13 @@ exports.handler = async (event) => {
     return rows;
   }
 
+  // Known spam / test callers to ignore so the lead counts stay clean.
+  const SPAM = ["+12024558888"];
+  const isSpam = (x) => x.direction === "inbound" && SPAM.includes(x.from);
+
   try {
-    const calls = await pull("Calls", "StartTime", "calls");
-    const msgs = await pull("Messages", "DateSent", "messages");
+    const calls = (await pull("Calls", "StartTime", "calls")).filter((c) => !isSpam(c));
+    const msgs = (await pull("Messages", "DateSent", "messages")).filter((m) => !isSpam(m));
 
     // Break down per phone number. For inbound, the tracked number is "to";
     // for outbound it's "from".
