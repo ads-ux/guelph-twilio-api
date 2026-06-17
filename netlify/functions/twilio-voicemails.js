@@ -44,6 +44,7 @@ exports.handler = async (event) => {
     const callMap = {};
     calls.forEach(c => { callMap[c.sid] = c; });
 
+    const SPAM = ["+12024558888"];
     const voicemails = recs.map(r => {
       const c = callMap[r.call_sid] || {};
       const to = c.to || "";
@@ -56,7 +57,7 @@ exports.handler = async (event) => {
         recordingSid: r.sid,
         recordingUrl: `https://api.twilio.com/2010-04-01/Accounts/${SID}/Recordings/${r.sid}.mp3`
       };
-    }).sort((a, b) => new Date(b.date) - new Date(a.date));
+    }).filter(v => !SPAM.includes(v.caller)).sort((a, b) => new Date(b.date) - new Date(a.date));
 
     const bySite = {};
     voicemails.forEach(v => { bySite[v.site] = (bySite[v.site] || 0) + 1; });
