@@ -41,9 +41,18 @@ exports.handler = async (event) => {
     const latest = (vers.j.function_versions || [])[0];
     if (!latest) return { statusCode: 200, headers: cors, body: JSON.stringify({ serviceSid, functionSid: fn.sid, note: "no versions", versions }, null, 2) };
 
-    // 4. Content of the latest version
-    const content = await get(`https://serverless-upload.twilio.com/v1/Services/${serviceSid}/Functions/${fn.sid}/Versions/${latest.sid}/Content`);
-    const code = content.j && (content.j.content || content.j._raw) || "";
+    // 4. Content of the latest version (correct host = serverless.twilio.com).
+    const content = await get(`https://serverless.twilio.com/v1/Services/${serviceSid}/Functions/${fn.sid}/Versions/${latest.sid}/Content`);
+    let code = content.j && content.j.content;
+    // Some responses put a signed URL in `content` (or under `url`) instead of inline code.
+    let via = "inline";
+    const maybeUrl = (typeof code === "string" && /^https?:\/\//.test(code.trim())) ? code.trim()
+                   : (content.j && content.j.url && /^https?:\/\//.test(content.j.url) && (!code || code.length < 5)) ? content.j.url : null;
+    if (maybeUrl) {
+      via = "url:" + maybeUrl;
+      const r2 = await fetch(maybeUrl, { headers: { Authorization: auth } });
+      code = await r2.text();
+    }
 
     return {
       statusCode: 200,
@@ -51,6 +60,9 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         serviceSid, functionSid: fn.sid, latestVersion: latest.sid, path: latest.path,
         functions, versions,
+        contentKeys: content.j ? Object.keys(content.j) : [],
+        contentRaw: content.j,
+        via,
         codeLength: (code || "").length,
         code,
       }, null, 2),
