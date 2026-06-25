@@ -31,6 +31,7 @@ const GSC_SITES = [
   "https://weprovideleads.com/","https://guelphwindowcleaning.ca/","https://guelphlawncare.ca/",
   "https://guelphcarpetcleaning.ca/","https://guelphdeckbuilder.com/","https://guelphappliancerepair.com/",
   "https://guelphexterminator.com/","https://guelphgaragedoor.com/","https://guelpheavestrough.com/",
+  "sc-domain:jdhomesolutions.ca","sc-domain:barrieexteriorcleaning.ca",
 ];
 
 const b64url = (buf) =>
